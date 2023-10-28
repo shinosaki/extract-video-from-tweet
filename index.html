@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Get video in tweet</title>
+  <script>
+    const corsProxy = (url, opts) => fetch('https://cors.lain.im/'+ url, opts);
+
+    const API = {
+      Publish: {
+        TweetResult: (id) => corsProxy('https://cdn.syndication.twimg.com/tweet-result?token=fuck&id=' + id).then(r => r.json()),
+      },
+    };
+  </script>
+</head>
+<body>
+  <form id="form">
+    <label>Tweet URL: <input id="tweetUrl" name="tweetUrl" /></label>
+    <button>Get!</button>
+  </form>
+  <a id="download">Direct Link</a>
+  <p id="error"></p>
+  <video id="video" controls preload="metadata" style="width: 50%; height: auto" />
+
+  <script>
+    const input = document.getElementById('tweetUrl');
+    const form = document.getElementById('form');
+    const video = document.getElementById('video');
+    const error = document.getElementById('error');
+    const download = document.getElementById('download');
+
+    download.style.opacity = 0;
+    video.volume = 0.5
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const tweetId = input.value.match(/status\/(?<id>\d+)/).groups.id;
+      const json = await API.Publish.TweetResult(tweetId);
+
+      if (json?.video) {
+        video.poster = json.video?.poster;
+
+        const { type, src } = json.video.variants.filter(v => v.type === 'video/mp4').pop();
+
+        video.src = src;
+        video.type = type;
+        download.href = src;
+        download.style.opacity = 1;
+      } else {
+        error.innerText = "This tweet doesn't contain a video.";
+      }
+    });
+  </script>
+</body>
+</html>
